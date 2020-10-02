@@ -11,12 +11,15 @@ import java.util.TreeMap;
 
 public class Main {
     
-    private static double start, stop;
+    private static double start;
+    private static double stop;
     
     public static void main(String[] args) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("Введите шаг построения.");
-        double step = readDouble(reader);
+        double step;
+        while ((step = readDouble(reader)) <= 0)
+            System.out.println("Шаг построения должен быть больше нуля. Попробуйте снова.");
         
         readRange(reader);
         
@@ -24,8 +27,8 @@ public class Main {
         for (; start <= stop; start += step)
             doubleMap.put(start, func(start));
         
-        doubleMap.values().stream().max(Comparator.comparingInt(o -> String.valueOf(o).length())).ifPresent(doub -> {
-                int length = doub.toString().length();
+        doubleMap.values().stream().max(Comparator.comparingInt(aDouble -> String.valueOf(aDouble).length())).ifPresent(aDouble -> {
+                int length = aDouble.toString().length();
                 printLine(length);
                 System.out.format("|%s|%s|\n", StringUtils.center("X", length), StringUtils.center("Y", length));
                 printLine(length);
@@ -55,7 +58,7 @@ public class Main {
     }
     
     private static double func(double x) {
-        return Math.pow(Math.cos(20 * x) + Math.sqrt(Math.abs(x)) - 0.7, 0.99);
+        return Math.exp(1 + x * x) / Math.cbrt(Math.cos(x)) * Math.pow(Math.E, -(x * x));
     }
     
     private static double readDouble(BufferedReader reader) {
