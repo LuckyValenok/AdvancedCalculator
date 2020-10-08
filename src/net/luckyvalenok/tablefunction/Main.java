@@ -25,7 +25,7 @@ public class Main {
         
         Map<Double, Double> doubleMap = new TreeMap<>();
         for (; start <= stop; start += step)
-            doubleMap.put(start, func(start));
+            doubleMap.put(start, count(start));
         
         doubleMap.values().stream().max(Comparator.comparingInt(aDouble -> String.valueOf(aDouble).length())).ifPresent(aDouble -> {
                 int length = aDouble.toString().length();
@@ -57,7 +57,7 @@ public class Main {
         System.out.println(StringUtils.repeat('-', i * 2 + 3));
     }
     
-    private static double func(double x) {
+    private static double count(double x) {
         return Math.exp(1 + x * x) / Math.cbrt(Math.cos(x)) * Math.pow(Math.E, -(x * x));
     }
     
