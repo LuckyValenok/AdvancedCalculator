@@ -117,8 +117,6 @@ public class Main {
                 continue;
             }
             
-            System.out.println(sb.toString() + " " + op.toString());
-            
             if (Character.isDigit(ch)) {
                 String digit = "";
                 boolean hasPoint = false;
