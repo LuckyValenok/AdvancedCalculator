@@ -2,71 +2,173 @@ package net.luckyvalenok.tablefunction;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EmptyStackException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Scanner;
+import java.util.Stack;
 import java.util.TreeMap;
 
 public class Main {
     
-    private static double start;
-    private static double stop;
+    private static final Map<String, Integer> priorities = new HashMap<>();
+    private static final Stack<Double> numbers = new Stack<>();
+    private static final Stack<String> operations = new Stack<>();
     
-    public static void main(String[] args) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        System.out.println("Введите шаг построения.");
-        double step;
-        while ((step = readDouble(reader)) <= 0)
-            System.out.println("Шаг построения должен быть больше нуля. Попробуйте снова.");
+    static {
+        priorities.put("+", 1);
+        priorities.put("-", 1);
+        priorities.put("*", 2);
+        priorities.put("/", 2);
+    }
+    
+    public static void main(String[] args) throws Exception {
+        File input = new File("input.txt");
+        if (!input.exists() && input.createNewFile()) {
+            System.out.println("Файл был создан. Введите в него функцию");
+            return;
+        }
+        FileReader fileReader = new FileReader(input);
+        Scanner scanner = new Scanner(fileReader);
         
-        readRange(reader);
+        double start = readDouble(scanner, "начало диапазона");
+        double stop = readDouble(scanner, "конец диапазона");
+        double step = readDouble(scanner, "шаг построения");
+        fileReader.close();
+        if (step <= 0) {
+            System.out.println("Шаг построения не может быть <= 0");
+            return;
+        }
         
-        Map<Double, Double> doubleMap = new TreeMap<>();
-        for (; start <= stop; start += step)
-            doubleMap.put(start, count(start));
+        String function = readString(scanner, "функцию");
         
-        doubleMap.values().stream().max(Comparator.comparingInt(aDouble -> String.valueOf(aDouble).length())).ifPresent(aDouble -> {
-                int length = aDouble.toString().length();
-                printLine(length);
-                System.out.format("|%s|%s|\n", StringUtils.center("X", length), StringUtils.center("Y", length));
-                printLine(length);
-                for (Map.Entry<Double, Double> entry : doubleMap.entrySet())
-                    System.out.format("|%" + length + "s|%" + length + "s|\n", entry.getKey(), entry.getValue());
-                printLine(length);
+        Map<Double, String> doubleMap = new TreeMap<>();
+        for (; start <= stop; start += step) {
+            doubleMap.put(start, count(function, start));
+        }
+        
+        saveFile(doubleMap);
+    }
+    
+    private static void saveFile(Map<Double, String> map) throws IOException {
+        FileWriter output = new FileWriter("output.txt");
+        Optional<String> optional = map.values().stream()
+            .max(Comparator.comparingInt(aDouble -> String.valueOf(aDouble).length()));
+        if (optional.isPresent()) {
+            int maxLength = optional.get().length();
+            output.write(StringUtils.repeat('-', maxLength * 2 + 3) + "\n");
+            output.write(String.format("|%s|%s|\n", StringUtils.center("X", maxLength), StringUtils.center("Y", maxLength)));
+            output.write(StringUtils.repeat('-', maxLength * 2 + 3) + "\n");
+            for (Map.Entry<Double, String> entry : map.entrySet()) {
+                output.write(String.format("|%" + maxLength + "s|%" + maxLength + "s|\n", entry.getKey(), entry.getValue()));
             }
-        );
-    }
-    
-    private static boolean readRange(BufferedReader reader) {
-        System.out.println("Введите начало диапазона значений x.");
-        start = readDouble(reader);
-        
-        System.out.println("Введите конец диапазона значений x.");
-        stop = readDouble(reader);
-        
-        if (start > stop) {
-            System.out.println("У вас начало диапазона больше, чем конец. Попробуйте снова.");
-            return readRange(reader);
+            output.write(StringUtils.repeat('-', maxLength * 2 + 3));
+        } else {
+            output.write("Программа не смогла произвести подсчеты");
         }
-        return true;
+        output.close();
     }
     
-    private static void printLine(int i) {
-        System.out.println(StringUtils.repeat('-', i * 2 + 3));
+    private static String count(String function, double x) {
+        return getResult(getBlocks(function.replace("x", x + "")));
     }
     
-    private static double count(double x) {
-        return Math.exp(1 + x * x) / Math.cbrt(Math.cos(x)) * Math.pow(Math.E, -(x * x));
+    private static double readDouble(Scanner scanner, String name) throws Exception {
+        hasNext(scanner, name);
+        return Double.parseDouble(scanner.nextLine());
     }
     
-    private static double readDouble(BufferedReader reader) {
+    private static String readString(Scanner scanner, String name) throws Exception {
+        hasNext(scanner, name);
+        return scanner.nextLine();
+    }
+    
+    private static void hasNext(Scanner scanner, String name) throws Exception {
+        if (!scanner.hasNext()) {
+            throw new Exception("Не удалось считать " + name + " из файла");
+        }
+    }
+    
+    private static String[] getBlocks(String function) {
+        return Arrays.stream(function.trim().split(" "))
+            .filter(s -> !s.isEmpty())
+            .toArray(String[]::new);
+    }
+    
+    private static String getResult(String[] blocks) {
+        String stringResult;
         try {
-            return Double.parseDouble(reader.readLine());
-        } catch (NumberFormatException | IOException exception) {
-            System.out.println("То, что вы ввели, не является числом.");
-            return readDouble(reader);
+            for (String element : blocks) {
+                try {
+                    double number = Double.parseDouble(element);
+                    numbers.push(number);
+                } catch (NumberFormatException exception) {
+                    if (priorities.get(element) == null) {
+                        throw new Exception("Недопустимая операция " + element);
+                    } else {
+                        if (!operations.empty()) {
+                            int priority = priorities.get(element);
+                            
+                            String operation;
+                            while (!operations.empty() && (operation = operations.peek()) != null && priority <= priorities.get(operation)) {
+                                calculate();
+                            }
+                        }
+                        operations.push(element);
+                    }
+                }
+            }
+            
+            while (!operations.empty()) {
+                calculate();
+            }
+            
+            double result = numbers.pop();
+            if (numbers.empty()) {
+                stringResult = result + ""; // Конкатенация происходит быстрее, чем String.valueOf(result), поэтому сделал так
+            } else {
+                stringResult = "В примере ошибка. Недостаточно операторов для всех чисел";
+            }
+        } catch (EmptyStackException exception) {
+            stringResult = "В примере ошибка. Недостаточно чисел для всех операторов";
+        } catch (Exception exception) {
+            stringResult = exception.getMessage();
         }
+        
+        return stringResult;
+    }
+    
+    private static void calculate() throws Exception {
+        String operation = operations.pop();
+        Double n2 = numbers.pop();
+        Double n1 = numbers.pop();
+        double result = 0;
+        
+        switch (operation) {
+            case "+":
+                result = n1 + n2;
+                break;
+            case "-":
+                result = n1 - n2;
+                break;
+            case "*":
+                result = n1 * n2;
+                break;
+            case "/":
+                if (n2 == 0) {
+                    throw new Exception("Деление на 0 невозможно");
+                }
+                result = n1 / n2;
+                break;
+        }
+        
+        numbers.push(result);
     }
 }
