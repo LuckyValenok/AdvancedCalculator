@@ -32,29 +32,32 @@ public class Main {
     public static void main(String[] args) throws Exception {
         File input = new File("input.txt");
         if (!input.exists() && input.createNewFile()) {
-            System.out.println("Файл был создан. Введите в него функцию");
+            System.out.println("Файл был создан. Введите в него следующие данные: начало диапазона, конец диапазона, шаг построения, функцию (используйте x)");
             return;
         }
         FileReader fileReader = new FileReader(input);
         Scanner scanner = new Scanner(fileReader);
-        
-        double start = readDouble(scanner, "начало диапазона");
-        double stop = readDouble(scanner, "конец диапазона");
-        double step = readDouble(scanner, "шаг построения");
-        fileReader.close();
-        if (step <= 0) {
-            System.out.println("Шаг построения не может быть <= 0");
-            return;
+        try {
+            double start = readDouble(scanner, "начало диапазона");
+            double stop = readDouble(scanner, "конец диапазона");
+            double step = readDouble(scanner, "шаг построения");
+            fileReader.close();
+            if (step <= 0) {
+                System.out.println("Шаг построения не может быть <= 0");
+                return;
+            }
+    
+            String function = readString(scanner, "функцию");
+    
+            Map<Double, String> doubleMap = new TreeMap<>();
+            for (; start <= stop; start += step) {
+                doubleMap.put(start, count(function, start));
+            }
+    
+            saveFile(doubleMap);
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
         }
-        
-        String function = readString(scanner, "функцию");
-        
-        Map<Double, String> doubleMap = new TreeMap<>();
-        for (; start <= stop; start += step) {
-            doubleMap.put(start, count(function, start));
-        }
-        
-        saveFile(doubleMap);
     }
     
     private static void saveFile(Map<Double, String> map) throws IOException {
@@ -82,7 +85,11 @@ public class Main {
     
     private static double readDouble(Scanner scanner, String name) throws Exception {
         hasNext(scanner, name);
-        return Double.parseDouble(scanner.nextLine());
+        try {
+            return Double.parseDouble(scanner.nextLine());
+        } catch (NumberFormatException exception) {
+            throw new Exception("Не удалось считать " + name + " из файла");
+        }
     }
     
     private static String readString(Scanner scanner, String name) throws Exception {
