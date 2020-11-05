@@ -46,14 +46,14 @@ public class Main {
                 System.out.println("Шаг построения не может быть <= 0");
                 return;
             }
-    
+            
             String function = readString(scanner, "функцию");
-    
+            
             Map<Double, String> doubleMap = new TreeMap<>();
             for (; start <= stop; start += step) {
                 doubleMap.put(start, count(function, start));
             }
-    
+            
             saveFile(doubleMap);
         } catch (Exception exception) {
             System.out.println(exception.getMessage());
@@ -101,6 +101,62 @@ public class Main {
         if (!scanner.hasNext()) {
             throw new Exception("Не удалось считать " + name + " из файла");
         }
+    }
+    
+    public static Stack<String> parseExpression(String expression) {
+        Stack<String> sb = new Stack<>();
+        Stack<Operator> op = new Stack<>();
+        
+        char[] chars = expression.toCharArray();
+        int N = chars.length;
+        
+        for (int i = 0; i < N; i++) {
+            char ch = chars[i];
+            
+            if (ch == ' ') {
+                continue;
+            }
+            
+            if (Character.isDigit(ch)) {
+                String digit = "";
+                boolean hasPoint = false;
+                while (Character.isDigit(chars[i]) || (!hasPoint && (chars[i] == '.' || chars[i] == ','))) {
+                    if (!hasPoint)
+                        hasPoint = chars[i] == '.' || chars[i] == ',';
+                    digit += chars[i++];
+                }
+                i--;
+                if (digit.endsWith(".") || digit.endsWith(","))
+                    digit = digit.substring(0, digit.length() - 1);
+                sb.push(digit);
+            } else if (ch == '(') {
+                op.push(Operator.OPENING_BRACKET);
+            } else if (ch == ')') {
+                while (op.peek() != Operator.OPENING_BRACKET) {
+                    sb.push(op.pop().getSymbol() + "");
+                }
+                op.pop();
+            } else {
+                String operation = "";
+                while (Character.isLetter(chars[i]) || Operator.getOperator(chars[i] + "") != null) {
+                    operation += chars[i++];
+                }
+                i--;
+                Operator operator = Operator.getOperator(operation);
+                if (operator != null) {
+                    while (!op.isEmpty() && op.peek().getPriority() >= operator.getPriority()) {
+                        sb.push(op.pop().getSymbol() + "");
+                    }
+                    op.push(operator);
+                }
+            }
+        }
+        
+        while (!op.isEmpty()) {
+            sb.push(op.pop().getSymbol() + "");
+        }
+        
+        return sb;
     }
     
     private static String[] getBlocks(String function) {
