@@ -2,48 +2,73 @@ package net.luckyvalenok.tablefunction;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public enum Operator {
     
     OPENING_BRACKET("(", null, 0),
     CLOSING_BRACKET(")", null, 0),
-    PLUS("+", doubles -> doubles.pop() + doubles.pop(), 1),
-    MINUS("-", doubles -> -doubles.pop() + doubles.pop(), 1),
-    MULTIPLICATION("*", doubles -> doubles.pop() * doubles.pop(), 2),
-    DIVISION("/", doubles -> {
-        double one = doubles.pop();
-        double two = doubles.pop();
-        return two / one;
+    PLUS("+", helper -> {
+        double[] doubles = calculate(helper, 2);
+        helper.add(helper.getOffset(), doubles[0] + doubles[1] + "");
+    }, 1),
+    MINUS("-", helper -> {
+        double[] doubles = calculate(helper, 2);
+        helper.add(helper.getOffset(), doubles[0] - doubles[1] + "");
+    }, 1),
+    MULTIPLICATION("*", helper -> {
+        double[] doubles = calculate(helper, 2);
+        helper.add(helper.getOffset(), doubles[0] * doubles[1] + "");
     }, 2),
-    POW("^", doubles -> Math.pow(doubles.pop(), doubles.pop()), 3),
-    SINUS("sin", doubles -> Math.sin(doubles.pop()), 3),
-    FACTORIAL("!", doubles -> calculateFactorial(doubles.pop()), 3),
-    COSINE("cos", doubles -> Math.cos(doubles.pop()), 3),
-    ROUND("round", doubles -> (double) Math.round(doubles.pop()), 3),
-    LOGARITHM("log", doubles -> Math.log(doubles.pop()) / Math.log(doubles.pop()), 3);
+    DIVISION("/", helper -> {
+        double[] doubles = calculate(helper, 2);
+        helper.add(helper.getOffset(), doubles[0] / doubles[1] + "");
+    }, 2),
+    POW("^", helper -> {
+        double[] doubles = calculate(helper, 2);
+        helper.add(helper.getOffset(), Math.pow(doubles[0], doubles[1]) + "");
+    }, 3),
+    SINUS("sin", helper -> {
+        double[] doubles = calculate(helper, 1);
+        helper.add(helper.getOffset(), Math.sin(doubles[0]) + "");
+    }, 3),
+    FACTORIAL("!", helper -> {
+        double[] doubles = calculate(helper, 1);
+        helper.add(helper.getOffset(), calculateFactorial(doubles[0]) + "");
+    }, 3),
+    COSINE("cos", helper -> {
+        double[] doubles = calculate(helper, 1);
+        helper.add(helper.getOffset(), Math.cos(doubles[0]) + "");
+    }, 3),
+    ROUND("round", helper -> {
+        double[] doubles = calculate(helper, 1);
+        helper.add(helper.getOffset(), Math.round(doubles[0]) + "");
+    }, 3),
+    LOGARITHM("log", helper -> {
+        double[] doubles = calculate(helper, 2);
+        helper.add(helper.getOffset(), Math.log(doubles[0]) / Math.log(doubles[1]) + "");
+    }, 3);
     
     private static final Map<String, Operator> operators = new HashMap<>();
     
     static {
         for (Operator operator : values()) {
-            if (operator.getFunction() != null) {
+            if (operator.getConsumer() != null) {
                 operators.put(operator.getSymbol(), operator);
             }
         }
     }
     
     private final String symbol;
-    private final Function<Stack<Double>, Double> function;
+    private final Consumer<CountHelper> consumer;
     private final int priority;
     
-    Operator(String symbol, Function<Stack<Double>, Double> function, int priority) {
+    Operator(String symbol, Consumer<CountHelper> consumer, int priority) {
         this.symbol = symbol;
-        this.function = function;
+        this.consumer = consumer;
         this.priority = priority;
     }
-
+    
     private static double calculateFactorial(double i) {
         if (i <= 0)
             return 1;
@@ -55,12 +80,27 @@ public enum Operator {
         return operators.get(symbol);
     }
     
+    public static double[] calculate(CountHelper helper, int offset) {
+        int index = helper.getIndex();
+        helper.remove(index);
+        String one = helper.remove(index - offset);
+        double[] numbers = new double[1];
+        if (offset != 1) {
+            numbers = new double[2];
+            String two = helper.remove(index - offset);
+            numbers[1] = Double.parseDouble(two);
+        }
+        numbers[0] = Double.parseDouble(one);
+        helper.setOffset(index - offset);
+        return numbers;
+    }
+    
     public String getSymbol() {
         return symbol;
     }
     
-    public Function<Stack<Double>, Double> getFunction() {
-        return function;
+    public Consumer<CountHelper> getConsumer() {
+        return consumer;
     }
     
     public int getPriority() {
