@@ -18,8 +18,9 @@ public class Main {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("Введите шаг построения.");
         double step;
-        while ((step = readDouble(reader)) <= 0)
+        while ((step = readDouble(reader)) <= 0) {
             System.out.println("Шаг построения должен быть больше нуля. Попробуйте снова.");
+        }
         
         readRange(reader);
         
@@ -27,16 +28,19 @@ public class Main {
         for (; start <= stop; start += step)
             doubleMap.put(start, count(start));
         
-        doubleMap.values().stream().max(Comparator.comparingInt(aDouble -> String.valueOf(aDouble).length())).ifPresent(aDouble -> {
-                int length = aDouble.toString().length();
-                printLine(length);
-                System.out.format("|%s|%s|\n", StringUtils.center("X", length), StringUtils.center("Y", length));
-                printLine(length);
-                for (Map.Entry<Double, Double> entry : doubleMap.entrySet())
-                    System.out.format("|%" + length + "s|%" + length + "s|\n", entry.getKey(), entry.getValue());
-                printLine(length);
-            }
-        );
+        doubleMap.values().stream()
+            .max(Comparator.comparingInt(aDouble -> (aDouble + "").length()))
+            .ifPresent(aDouble -> {
+                    int length = (aDouble + "").length();
+                    printLine(length);
+                    System.out.format("|%s|%s|\n", StringUtils.center("X", length), StringUtils.center("Y", length));
+                    printLine(length);
+                    for (Map.Entry<Double, Double> entry : doubleMap.entrySet()) {
+                        System.out.format("|%" + length + "s|%" + length + "s|\n", entry.getKey(), entry.getValue());
+                    }
+                    printLine(length);
+                }
+            );
     }
     
     private static boolean readRange(BufferedReader reader) {
