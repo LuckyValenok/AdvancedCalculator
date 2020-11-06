@@ -22,25 +22,11 @@ public class Main {
             System.out.println("Файл был создан. Введите в него следующие данные: начало диапазона, конец диапазона, шаг построения, функцию (используйте x)");
             return;
         }
+        
         FileReader fileReader = new FileReader(input);
-        Scanner scanner = new Scanner(fileReader);
         try {
-            double start = readDouble(scanner, "начало диапазона");
-            double stop = readDouble(scanner, "конец диапазона");
-            double step = readDouble(scanner, "шаг построения");
-            fileReader.close();
-            if (step <= 0) {
-                System.out.println("Шаг построения не может быть <= 0");
-                return;
-            }
-            
-            String function = readString(scanner, "функцию");
-            
             Map<Double, String> doubleMap = new TreeMap<>();
-            for (; start <= stop; start += step) {
-                doubleMap.put(start, count(function, start));
-            }
-            
+            fillMap(doubleMap, fileReader);
             saveFile(doubleMap);
         } catch (Exception exception) {
             System.out.println(exception.getMessage());
@@ -64,6 +50,24 @@ public class Main {
             output.write("Программа не смогла произвести подсчеты");
         }
         output.close();
+    }
+    
+    private static void fillMap(Map<Double, String> doubleMap, FileReader reader) throws Exception {
+        Scanner scanner = new Scanner(reader);
+        double start = readDouble(scanner, "начало диапазона");
+        double stop = readDouble(scanner, "конец диапазона");
+        double step = readDouble(scanner, "шаг построения");
+        if (step <= 0) {
+            System.out.println("Шаг построения не может быть <= 0");
+            return;
+        }
+        
+        String function = readString(scanner, "функцию");
+        
+        for (; start <= stop; start += step) {
+            doubleMap.put(start, count(function, start));
+        }
+        reader.close();
     }
     
     private static String count(String function, double x) throws Exception {
