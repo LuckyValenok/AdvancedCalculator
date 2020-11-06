@@ -104,7 +104,7 @@ public class Main {
         for (int i = 0; i < length; i++) {
             char ch = chars[i];
             
-            if (ch == ' ') {
+            if (ch == ' ' || ch == ',') {
                 continue;
             }
             
