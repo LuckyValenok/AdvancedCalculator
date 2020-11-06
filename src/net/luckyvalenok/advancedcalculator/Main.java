@@ -1,4 +1,4 @@
-package net.luckyvalenok.tablefunction;
+package net.luckyvalenok.advancedcalculator;
 
 import org.apache.commons.lang3.StringUtils;
 
