@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -63,15 +64,20 @@ public class Main {
         }
         
         String function = readString(scanner, "функцию");
+        List<String> parsedExpression = parseExpression(function);
         
         for (; start <= stop; start += step) {
-            doubleMap.put(start, count(function, start));
+            List<String> cloneParsedExpression = new ArrayList<>(parsedExpression);
+            double finalStart = start;
+            cloneParsedExpression.replaceAll(s -> {
+                if (s.equals("x")) {
+                    s = finalStart + "";
+                }
+                return s;
+            });
+            doubleMap.put(start, getResult(cloneParsedExpression));
         }
         reader.close();
-    }
-    
-    private static String count(String function, double x) throws Exception {
-        return getResult(parseExpression(function.replace("x", x + "")));
     }
     
     private static double readDouble(Scanner scanner, String name) throws Exception {
@@ -120,6 +126,8 @@ public class Main {
                 if (digit.toString().endsWith("."))
                     digit = new StringBuilder(digit.substring(0, digit.length() - 1));
                 sb.push(digit.toString());
+            } else if (ch == 'x') {
+                sb.push("x");
             } else if (ch == '(') {
                 op.push(Operator.OPENING_BRACKET);
             } else if (ch == ')') {
