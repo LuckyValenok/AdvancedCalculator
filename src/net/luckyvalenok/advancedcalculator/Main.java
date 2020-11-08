@@ -6,14 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Scanner;
-import java.util.Stack;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Main {
     
@@ -36,10 +29,12 @@ public class Main {
     
     private static void saveFile(Map<Double, String> map) throws IOException {
         FileWriter output = new FileWriter("output.txt");
-        Optional<String> optional = map.values().stream()
+        List<String> strings = new ArrayList<>(map.values());
+        map.keySet().forEach(aDouble -> strings.add(aDouble + ""));
+        Optional<String> optional = strings.stream()
             .max(Comparator.comparingInt(aDouble -> String.valueOf(aDouble).length()));
         if (optional.isPresent()) {
-            int maxLength = optional.get().length() + 5;
+            int maxLength = optional.get().length();
             output.write(StringUtils.repeat('-', maxLength * 2 + 3) + "\n");
             output.write(String.format("|%s|%s|\n", StringUtils.center("X", maxLength), StringUtils.center("Y", maxLength)));
             output.write(StringUtils.repeat('-', maxLength * 2 + 3) + "\n");
@@ -100,7 +95,7 @@ public class Main {
         }
     }
     
-    public static List<String> parseExpression(String expression) throws Exception {
+    public static Stack<String> parseExpression(String expression) throws Exception {
         Stack<String> sb = new Stack<>();
         Stack<Operator> op = new Stack<>();
         
