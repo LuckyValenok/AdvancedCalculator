@@ -13,10 +13,6 @@ public class CountHelper {
         this.index = index;
     }
     
-    public int getIndex() {
-        return index;
-    }
-    
     public String remove(int index) {
         return list.remove(index);
     }
@@ -31,5 +27,19 @@ public class CountHelper {
     
     public void setOffset(int offset) {
         this.offset = offset;
+    }
+    
+    public double[] getDoubles(int offset) {
+        remove(index);
+        String one = remove(index - offset);
+        double[] numbers = new double[1];
+        if (offset != 1) {
+            numbers = new double[2];
+            String two = remove(index - offset);
+            numbers[1] = Double.parseDouble(two);
+        }
+        numbers[0] = Double.parseDouble(one);
+        setOffset(index - offset);
+        return numbers;
     }
 }

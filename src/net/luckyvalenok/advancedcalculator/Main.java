@@ -52,10 +52,12 @@ public class Main {
         Scanner scanner = new Scanner(reader);
         double start = readDouble(scanner, "начало диапазона");
         double stop = readDouble(scanner, "конец диапазона");
+        if (start < stop) {
+            throw new Exception("Начало диапазона должно быть меньше конца диапазона");
+        }
         double step = readDouble(scanner, "шаг построения");
         if (step <= 0) {
-            System.out.println("Шаг построения не может быть <= 0");
-            return;
+            throw new Exception("Шаг построения не может быть <= 0");
         }
         
         String function = readString(scanner, "функцию");
