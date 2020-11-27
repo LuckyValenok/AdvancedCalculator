@@ -6,7 +6,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Scanner;
 
 public class Main {
     
@@ -18,10 +23,24 @@ public class Main {
         }
         
         FileReader fileReader = new FileReader(input);
+        
+        Scanner scanner = new Scanner(fileReader);
+        double start = readDouble(scanner, "начало диапазона");
+        double stop = readDouble(scanner, "конец диапазона");
+        if (start < stop) {
+            throw new Exception("Начало диапазона должно быть меньше конца диапазона");
+        }
+        double step = readDouble(scanner, "шаг построения");
+        if (step <= 0) {
+            throw new Exception("Шаг построения не может быть <= 0");
+        }
+        String function = readString(scanner, "функцию");
+        scanner.close();
+        fileReader.close();
+        
         try {
-            Map<Double, String> doubleMap = new TreeMap<>();
-            fillMap(doubleMap, fileReader);
-            saveFile(doubleMap);
+            Calculator calculator = new Calculator(start, stop, step, function);
+            saveFile(calculator.getFilledMap());
         } catch (Exception exception) {
             System.out.println(exception.getMessage());
         }
@@ -48,35 +67,6 @@ public class Main {
         output.close();
     }
     
-    private static void fillMap(Map<Double, String> doubleMap, FileReader reader) throws Exception {
-        Scanner scanner = new Scanner(reader);
-        double start = readDouble(scanner, "начало диапазона");
-        double stop = readDouble(scanner, "конец диапазона");
-        if (start < stop) {
-            throw new Exception("Начало диапазона должно быть меньше конца диапазона");
-        }
-        double step = readDouble(scanner, "шаг построения");
-        if (step <= 0) {
-            throw new Exception("Шаг построения не может быть <= 0");
-        }
-        
-        String function = readString(scanner, "функцию");
-        List<String> parsedExpression = parseExpression(function);
-        
-        for (; start <= stop; start += step) {
-            List<String> cloneParsedExpression = new ArrayList<>(parsedExpression);
-            double finalStart = start;
-            cloneParsedExpression.replaceAll(s -> {
-                if (s.equals("x")) {
-                    s = finalStart + "";
-                }
-                return s;
-            });
-            doubleMap.put(start, getResult(cloneParsedExpression));
-        }
-        reader.close();
-    }
-    
     private static double readDouble(Scanner scanner, String name) throws Exception {
         hasNext(scanner, name);
         try {
@@ -95,93 +85,5 @@ public class Main {
         if (!scanner.hasNext()) {
             throw new Exception("Не удалось считать " + name + " из файла");
         }
-    }
-    
-    public static Stack<String> parseExpression(String expression) throws Exception {
-        Stack<String> sb = new Stack<>();
-        Stack<Operator> op = new Stack<>();
-        
-        char[] chars = expression.toCharArray();
-        int length = chars.length;
-        
-        for (int i = 0; i < length; i++) {
-            char ch = chars[i];
-            
-            if (ch == ' ' || ch == ',') {
-                continue;
-            }
-            
-            if (Character.isDigit(ch)) {
-                StringBuilder digit = new StringBuilder();
-                boolean hasPoint = false;
-                while (i < length && (Character.isDigit(chars[i]) || (!hasPoint && chars[i] == '.'))) {
-                    if (!hasPoint)
-                        hasPoint = chars[i] == '.';
-                    digit.append(chars[i++]);
-                }
-                i--;
-                if (digit.toString().endsWith("."))
-                    digit = new StringBuilder(digit.substring(0, digit.length() - 1));
-                sb.push(digit.toString());
-            } else if (ch == 'x') {
-                sb.push("x");
-            } else if (ch == '(') {
-                op.push(Operator.OPENING_BRACKET);
-            } else if (ch == ')') {
-                while (op.peek() != Operator.OPENING_BRACKET) {
-                    sb.push(op.pop().getSymbol() + "");
-                }
-                op.pop();
-            } else {
-                StringBuilder operation = new StringBuilder();
-                while (i < length && (Character.isLetter(chars[i]) || Operator.getOperator(chars[i] + "") != null)) {
-                    operation.append(chars[i++]);
-                }
-                i--;
-                Operator operator = Operator.getOperator(operation.toString());
-                if (operator != null) {
-                    while (!op.isEmpty() && op.peek().getPriority() >= operator.getPriority()) {
-                        sb.push(op.pop().getSymbol() + "");
-                    }
-                    op.push(operator);
-                } else {
-                    throw new Exception("Недопустимая операция " + operation);
-                }
-            }
-        }
-        
-        while (!op.isEmpty()) {
-            Operator operator = op.pop();
-            if (operator == Operator.OPENING_BRACKET || operator == Operator.CLOSING_BRACKET) {
-                throw new Exception("Слишком много закрывающихся скобок или мало открывающихся");
-            }
-            sb.push(operator.getSymbol() + "");
-        }
-        
-        return sb;
-    }
-    
-    private static String getResult(List<String> blocks) {
-        String stringResult;
-        
-        try {
-            int index = 0;
-            while (blocks.size() != 1) {
-                String block = blocks.get(index);
-                Operator operator = Operator.getOperator(block);
-                if (operator != null) {
-                    CountHelper countHelper = new CountHelper(blocks, index);
-                    operator.getConsumer().accept(countHelper);
-                    index = countHelper.getOffset();
-                } else {
-                    index++;
-                }
-            }
-            stringResult = blocks.get(0);
-        } catch (Exception exception) {
-            stringResult = exception.getMessage();
-        }
-        
-        return stringResult;
     }
 }

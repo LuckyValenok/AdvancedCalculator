@@ -62,6 +62,7 @@ public enum Operator {
     private final String symbol;
     private final Consumer<CountHelper> consumer;
     private final int priority;
+    
     Operator(String symbol, Consumer<CountHelper> consumer, int priority) {
         this.symbol = symbol;
         this.consumer = consumer;
