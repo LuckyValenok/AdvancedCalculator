@@ -9,9 +9,12 @@ import java.util.TreeMap;
 public class Calculator {
     
     private double start;
-    private final double stop;
-    private final double step;
-    private final List<String> parsedExpression;
+    private double stop;
+    private double step;
+    private List<String> parsedExpression;
+    
+    public Calculator() {
+    }
     
     public Calculator(double start, double stop, double step, String function) throws Exception {
         this.start = start;
@@ -100,7 +103,7 @@ public class Calculator {
         return sb;
     }
     
-    private String getResult(List<String> blocks) {
+    public String getResult(List<String> blocks) {
         String stringResult;
         
         try {
@@ -122,5 +125,9 @@ public class Calculator {
         }
         
         return stringResult;
+    }
+    
+    public List<String> getParsedExpression() {
+        return parsedExpression;
     }
 }
