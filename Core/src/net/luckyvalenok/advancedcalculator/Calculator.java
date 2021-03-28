@@ -1,6 +1,7 @@
 package net.luckyvalenok.advancedcalculator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -11,6 +12,7 @@ public class Calculator {
     private double start;
     private double stop;
     private double step;
+    private double minY, maxY;
     private List<String> parsedExpression;
     
     public Calculator() {
@@ -23,19 +25,21 @@ public class Calculator {
         this.parsedExpression = parseExpression(function);
     }
     
-    public Map<Double, String> getFilledMap() {
-        Map<Double, String> doubleMap = new TreeMap<>();
-        for (; start <= stop; start += step) {
+    public Map<Double, Double> getFilledMap() {
+        Map<Double, Double> doubleMap = new TreeMap<>();
+        for (double i = start; i <= stop; i += step) {
             List<String> cloneParsedExpression = new ArrayList<>(parsedExpression);
-            double finalStart = start;
+            double finalStart = i;
             cloneParsedExpression.replaceAll(s -> {
                 if (s.equals("x")) {
                     s = finalStart + "";
                 }
                 return s;
             });
-            doubleMap.put(start, getResult(cloneParsedExpression));
+            doubleMap.put(i, Double.parseDouble(getResult(cloneParsedExpression)));
         }
+        minY = Collections.min(doubleMap.values());
+        maxY = Collections.max(doubleMap.values());
         return doubleMap;
     }
     
@@ -76,7 +80,7 @@ public class Calculator {
                 op.pop();
             } else {
                 StringBuilder operation = new StringBuilder();
-                while (i < length && (Character.isLetter(chars[i]) || Operator.getOperator(chars[i] + "") != null)) {
+                while (i < length && ((Character.isLetter(chars[i]) && chars[i] != 'x') || Operator.getOperator(chars[i] + "") != null)) {
                     operation.append(chars[i++]);
                 }
                 i--;
@@ -129,5 +133,25 @@ public class Calculator {
     
     public List<String> getParsedExpression() {
         return parsedExpression;
+    }
+    
+    public double getStart() {
+        return start;
+    }
+    
+    public double getStep() {
+        return step;
+    }
+    
+    public double getStop() {
+        return stop;
+    }
+    
+    public double getMaxY() {
+        return maxY;
+    }
+    
+    public double getMinY() {
+        return minY;
     }
 }
