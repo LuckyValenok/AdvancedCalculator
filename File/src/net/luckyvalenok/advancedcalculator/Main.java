@@ -46,9 +46,9 @@ public class Main {
         }
     }
     
-    private static void saveFile(Map<Double, String> map) throws IOException {
+    private static void saveFile(Map<Double, Double> map) throws IOException {
         FileWriter output = new FileWriter("output.txt");
-        List<String> strings = new ArrayList<>(map.values());
+        List<String> strings = map.values().stream().collect(ArrayList::new, (strings1, aDouble) -> strings1.add(aDouble + ""), ArrayList::addAll);
         map.keySet().forEach(aDouble -> strings.add(aDouble + ""));
         Optional<String> optional = strings.stream()
             .max(Comparator.comparingInt(aDouble -> String.valueOf(aDouble).length()));
@@ -57,7 +57,7 @@ public class Main {
             output.write(StringUtils.repeat('-', maxLength * 2 + 3) + "\n");
             output.write(String.format("|%s|%s|\n", StringUtils.center("X", maxLength), StringUtils.center("Y", maxLength)));
             output.write(StringUtils.repeat('-', maxLength * 2 + 3) + "\n");
-            for (Map.Entry<Double, String> entry : map.entrySet()) {
+            for (Map.Entry<Double, Double> entry : map.entrySet()) {
                 output.write(String.format("|%" + maxLength + "s|%" + maxLength + "s|\n", entry.getKey(), entry.getValue()));
             }
             output.write(StringUtils.repeat('-', maxLength * 2 + 3));
